@@ -1,6 +1,8 @@
-import 'dart:html';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart'; // Suitable for most situations
+import 'package:flutter_map/plugin_api.dart'; // Only import if required functionality is not exposed by default
+import 'package:latlong2/latlong.dart';
+import 'package:location/location.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 void main() {
@@ -16,15 +18,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
@@ -34,15 +27,6 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String title;
 
@@ -54,11 +38,49 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _controller = TextEditingController();
   final _channel = WebSocketChannel.connect(
       // Uri.parse('wss://echo.websocket.events')
-    Uri.parse('ws://localhost:8000')
-  );
+      Uri.parse('ws://localhost:8000') // JetRock local server.
+      );
+  LocationData? locationData;
+
+  @override
+  void initState() {
+    super.initState();
+    junk();
+  }
+
+  void junk() async {
+    final Location location = new Location();
+    LocationData _locationData = await location.getLocation();
+    print(_locationData.latitude);
+    print(_locationData.longitude);
+    print(_locationData.accuracy);
+    print(_locationData.altitude);
+    print(_locationData.speed);
+    print(_locationData.speedAccuracy);
+    print(_locationData.heading);
+    print(_locationData.time);
+    print(_locationData.isMock);
+    print(_locationData.verticalAccuracy);
+    print(_locationData.headingAccuracy);
+    print(_locationData.elapsedRealtimeNanos);
+    print(_locationData.elapsedRealtimeUncertaintyNanos);
+    print(_locationData.satelliteNumber);
+    print(_locationData.provider);
+
+    setState(() {
+      locationData = _locationData;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (locationData == null) {
+      return Scaffold(
+        body: Center(
+          child: Text("Locating..."),
+        ),
+      );
+    }
     return Scaffold(
       body: Center(
         child: Column(
@@ -76,6 +98,51 @@ class _MyHomePageState extends State<MyHomePage> {
               builder: (context, snapshot) {
                 return Text(snapshot.hasData ? '${snapshot.data}' : '');
               },
+            ),
+            Container(
+              width: 800,
+              height: 400,
+              child: FlutterMap(
+                options: MapOptions(
+                  center:
+                      LatLng(locationData!.latitude!, locationData!.longitude!),
+                  // center: LatLng(51.509364, -0.128928),
+                  zoom: 9.2,
+                ),
+                nonRotatedChildren: [
+                  AttributionWidget.defaultWidget(
+                    source: 'OpenStreetMap contributors',
+                    onSourceTapped: null,
+                  ),
+                ],
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.example.app',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: LatLng(
+                            locationData!.latitude!, locationData!.longitude!),
+                        width: 80,
+                        height: 80,
+                        builder: (context) =>
+                            Icon(Icons.add, color: Colors.red),
+                      ),
+                      Marker(
+                        point: LatLng(
+                            locationData!.latitude!, locationData!.longitude!),
+                        width: 80,
+                        height: 80,
+                        builder: (context) =>
+                            Icon(Icons.circle_outlined, color: Colors.red),
+                      ),
+                    ],
+                  )
+                ],
+              ),
             )
           ],
         ),
@@ -87,6 +154,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
       _channel.sink.add(_controller.text);
