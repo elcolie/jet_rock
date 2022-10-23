@@ -48,7 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
       );
   LocationData? locationData;
   Timer? timer;
-  int counter = 0;
+  Marker? saritMarker, palmMarker;
 
   @override
   void initState() {
@@ -110,42 +110,44 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
               const SizedBox(height: 24),
-              _streamBuilder,
-              // FlutterMap(
-              //   options: MapOptions(
-              //     center: LatLng(
-              //         locationData!.latitude!, locationData!.longitude!),
-              //     // center: LatLng(51.509364, -0.128928),
-              //     zoom: 15,
-              //   ),
-              //   nonRotatedChildren: [
-              //     AttributionWidget.defaultWidget(
-              //       source: 'OpenStreetMap contributors',
-              //       onSourceTapped: null,
-              //     ),
-              //   ],
-              //   children: [
-              //     TileLayer(
-              //       urlTemplate:
-              //       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              //       userAgentPackageName: 'com.example.app',
-              //     ),
-              //     MarkerLayer(
-              //       markers: [
-              //         // This phone position
-              //         Marker(
-              //           point: LatLng(locationData!.latitude!,
-              //               locationData!.longitude!),
-              //           width: 80,
-              //           height: 80,
-              //           builder: (context) =>
-              //               Icon(Icons.add, color: Colors.red),
-              //         ),
-              //         // otherMarker
-              //       ],
-              //     )
-              //   ],
-              // ),
+              // _streamBuilder,
+              Container(
+                height: 400,
+                width: 800,
+                child: FlutterMap(
+                  options: MapOptions(
+                    center: LatLng(
+                        locationData!.latitude!,
+                        locationData!.longitude!,
+                    ),
+                    // center: LatLng(51.509364, -0.128928),
+                    zoom: 15,
+                  ),
+                  nonRotatedChildren: [
+                    AttributionWidget.defaultWidget(
+                      source: 'OpenStreetMap contributors',
+                      onSourceTapped: null,
+                    ),
+                  ],
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.example.app',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: LatLng(locationData!.latitude!, locationData!.longitude!),
+                          width: 80,
+                          height: 80,
+                          builder: (context) => Icon(Icons.add, color: Colors.red,),
+                        )
+                      ],
+                    )
+                  ],
+                ),
+              ),
             ],
           ),
         ),
