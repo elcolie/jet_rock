@@ -31,10 +31,23 @@ django_application = get_asgi_application()
 from config.websocket import websocket_application  # noqa isort:skip
 
 
-async def application(scope, receive, send):
-    if scope["type"] == "http":
-        await django_application(scope, receive, send)
-    elif scope["type"] == "websocket":
-        await websocket_application(scope, receive, send)
-    else:
-        raise NotImplementedError(f"Unknown scope type {scope['type']}")
+# async def application(scope, receive, send):
+#     if scope["type"] == "http":
+#         await django_application(scope, receive, send)
+#     elif scope["type"] == "websocket":
+#         await websocket_application(scope, receive, send)
+#     else:
+#         raise NotImplementedError(f"Unknown scope type {scope['type']}")
+
+
+from channels.auth import AuthMiddlewareStack
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.security.websocket import AllowedHostsOriginValidator
+import chat.routing
+
+application = ProtocolTypeRouter(
+    {
+        "http": django_application,
+        "websocket": URLRouter(chat.routing.websocket_urlpatterns),
+    }
+)

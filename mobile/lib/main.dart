@@ -11,6 +11,8 @@ import 'package:location/location.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:wakelock/wakelock.dart';
 
+import 'const.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -41,26 +43,52 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final Member deviceName = Member.sarit;
   final TextEditingController _controller = TextEditingController();
   final _channel = WebSocketChannel.connect(
-      // Uri.parse('wss://echo.websocket.events')
-      Uri.parse('ws://localhost:8000') // local server.
-      );
+    // Uri.parse('wss://echo.websocket.events')
+    // Uri.parse('ws://localhost:8000') // local server.
+    Uri.parse('ws://192.168.1.46:8000/ws/chat/zeroth/') // local server.
+  );
   LocationData? locationData;
   Timer? timer;
-  Marker? saritMarker, palmMarker;
+  Marker saritMarker = Marker(
+    point: LatLng(30, 40),
+    width: 80,
+    height: 80,
+    builder: (context) => FlutterLogo(),
+  );
+  Marker palmMarker = Marker(
+    point: LatLng(30, 40),
+    width: 80,
+    height: 80,
+    builder: (context) => FlutterLogo(),
+  );
+  Marker lenovoMarker = Marker(
+    point: LatLng(30, 40),
+    width: 80,
+    height: 80,
+    builder: (context) => FlutterLogo(),
+  );
+  Marker suwatMarker = Marker(
+    point: LatLng(30, 40),
+    width: 80,
+    height: 80,
+    builder: (context) => FlutterLogo(),
+  );
 
   @override
   void initState() {
     super.initState();
-    Timer.periodic(Duration(seconds: 3), (timer) {
+    Timer.periodic(Duration(seconds: 10), (timer) {
       queryMyLocation();
+      // Advertise my location to server.
       if (locationData != null) {
         Map<String, dynamic> dataDict = {
           'latitude': locationData!.latitude!,
           'longitude': locationData!.longitude!,
           'accuracy': locationData!.accuracy!,
-          'name': 'sarit',
+          'name': MemberDict[deviceName],
         };
         _channel.sink.add(json.encode(dataDict));
       }
@@ -76,14 +104,48 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  Marker returnMarker(Map<dynamic, dynamic>payload, Icon icon){
+    return Marker(
+      point: LatLng(
+        payload['latitude'],
+        payload['longitude'],
+      ),
+      width: 80,
+      height: 80,
+      builder: (context) => icon
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    MediaQueryData queryData;
+    queryData = MediaQuery.of(context);
+    // Get the others coordinate
     var _streamBuilder = StreamBuilder(
-      stream: _channel.stream,
-      builder: (context, snapshot) {
-        String otherLocations = snapshot.hasData ? '${snapshot.data}' : '';
-        return Text(otherLocations);
-      },
+        stream: _channel.stream,
+        builder: (context, snapshot) {
+          String otherLocations = snapshot.hasData ? '${snapshot.data}' : '';
+          if (otherLocations == '') {
+            return Container();
+          }
+          print(otherLocations);
+          Map _ = json.decode(otherLocations);
+          Map payload = json.decode(_['message']);
+          print(payload);
+          if (payload['name'] == MemberDict[Member.sarit]) {
+            saritMarker = returnMarker(payload, Icon(Icons.add, color: Colors.red,));
+          }
+          if (payload['name'] == MemberDict[Member.suwat]) {
+            suwatMarker = returnMarker(payload, Icon(Icons.water_drop, color: Colors.blueAccent,));
+          }
+          if (payload['name'] == MemberDict[Member.lenovo]) {
+            lenovoMarker = returnMarker(payload, Icon(Icons.crop_3_2, color: Colors.green,));
+          }
+          if (payload['name'] == MemberDict[Member.palm]) {
+            palmMarker = returnMarker(payload, Icon(Icons.headphones, color: Colors.red,));
+          }
+          return Container();
+        },
     );
 
     if (locationData == null) {
@@ -95,68 +157,76 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       );
     }
-    print("${locationData!.latitude!}, ${locationData!.longitude!}");
+    // print("${locationData!.latitude!}, ${locationData!.longitude!}");
+    print("${saritMarker.point.latitude}, ${saritMarker.point.longitude}");
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Form(
-                child: TextFormField(
-                  controller: _controller,
-                  decoration:
-                      const InputDecoration(labelText: 'Send a message'),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // _streamBuilder,
-              Container(
-                height: 400,
-                width: 800,
-                child: FlutterMap(
-                  options: MapOptions(
-                    center: LatLng(
-                        locationData!.latitude!,
-                        locationData!.longitude!,
-                    ),
-                    // center: LatLng(51.509364, -0.128928),
-                    zoom: 15,
+      body: Center(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Form(
+            //   child: TextFormField(
+            //     controller: _controller,
+            //     decoration:
+            //         const InputDecoration(labelText: 'Send a message'),
+            //   ),
+            // ),
+            // const SizedBox(height: 24),
+            _streamBuilder,
+            Container(
+              height: queryData.size.height,
+              width: queryData.size.width,
+              child: FlutterMap(
+                options: MapOptions(
+                  center: LatLng(
+                    locationData!.latitude!,
+                    locationData!.longitude!,
                   ),
-                  nonRotatedChildren: [
-                    AttributionWidget.defaultWidget(
-                      source: 'OpenStreetMap contributors',
-                      onSourceTapped: null,
-                    ),
-                  ],
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.example.app',
-                    ),
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: LatLng(locationData!.latitude!, locationData!.longitude!),
-                          width: 80,
-                          height: 80,
-                          builder: (context) => Icon(Icons.add, color: Colors.red,),
-                        )
-                      ],
-                    )
-                  ],
+                  // center: LatLng(51.509364, -0.128928),
+                  zoom: 15,
                 ),
+                nonRotatedChildren: [
+                  AttributionWidget.defaultWidget(
+                    source: 'OpenStreetMap contributors',
+                    onSourceTapped: null,
+                  ),
+                ],
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.example.app',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      // Marker(
+                      //   point: LatLng(locationData!.latitude!,
+                      //       locationData!.longitude!),
+                      //   width: 80,
+                      //   height: 80,
+                      //   builder: (context) => Icon(
+                      //     Icons.add,
+                      //     color: Colors.red,
+                      //     size: 50,
+                      //   ),
+                      // ),
+                      saritMarker,
+                      lenovoMarker,
+                      palmMarker,
+                      suwatMarker,
+                    ],
+                  )
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _sendMessage,
-        tooltip: 'Send message',
-        child: const Icon(Icons.send),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: _sendMessage,
+      //   tooltip: 'Send message',
+      //   child: const Icon(Icons.send),
+      // ),
     );
   }
 
