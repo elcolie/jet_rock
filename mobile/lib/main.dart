@@ -47,7 +47,8 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _controller = TextEditingController();
   final _channel = WebSocketChannel.connect(
     // Uri.parse('wss://echo.websocket.events')
-    Uri.parse('ws://192.168.1.46:8000/ws/chat/zeroth/') // local server.
+    // Uri.parse('ws://192.168.1.46:8000/ws/chat/zeroth/') // local server.
+    Uri.parse('wss://www.jetrock.pro/ws/chat/zeroth/') // JetRock server.
   );
   LocationData? locationData;
   Timer? timer;
