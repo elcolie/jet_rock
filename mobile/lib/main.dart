@@ -47,7 +47,6 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _controller = TextEditingController();
   final _channel = WebSocketChannel.connect(
     // Uri.parse('wss://echo.websocket.events')
-    // Uri.parse('ws://localhost:8000') // local server.
     Uri.parse('ws://192.168.1.46:8000/ws/chat/zeroth/') // local server.
   );
   LocationData? locationData;
@@ -133,16 +132,16 @@ class _MyHomePageState extends State<MyHomePage> {
           Map payload = json.decode(_['message']);
           print(payload);
           if (payload['name'] == MemberDict[Member.sarit]) {
-            saritMarker = returnMarker(payload, Icon(Icons.add, color: Colors.red,));
+            saritMarker = returnMarker(payload, Icon(Icons.access_alarm, color: Colors.blue,));
           }
           if (payload['name'] == MemberDict[Member.suwat]) {
             suwatMarker = returnMarker(payload, Icon(Icons.water_drop, color: Colors.blueAccent,));
           }
           if (payload['name'] == MemberDict[Member.lenovo]) {
-            lenovoMarker = returnMarker(payload, Icon(Icons.crop_3_2, color: Colors.green,));
+            lenovoMarker = returnMarker(payload, Icon(Icons.adb, color: Colors.blue,));
           }
           if (payload['name'] == MemberDict[Member.palm]) {
-            palmMarker = returnMarker(payload, Icon(Icons.headphones, color: Colors.red,));
+            palmMarker = returnMarker(payload, Icon(Icons.local_fire_department, color: Colors.blue,));
           }
           return Container();
         },
@@ -199,17 +198,17 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   MarkerLayer(
                     markers: [
-                      // Marker(
-                      //   point: LatLng(locationData!.latitude!,
-                      //       locationData!.longitude!),
-                      //   width: 80,
-                      //   height: 80,
-                      //   builder: (context) => Icon(
-                      //     Icons.add,
-                      //     color: Colors.red,
-                      //     size: 50,
-                      //   ),
-                      // ),
+                      Marker(
+                        point: LatLng(locationData!.latitude!,
+                            locationData!.longitude!),
+                        width: 80,
+                        height: 80,
+                        builder: (context) => Icon(
+                          Icons.add,
+                          color: Colors.red,
+                          size: 50,
+                        ),
+                      ),
                       saritMarker,
                       lenovoMarker,
                       palmMarker,

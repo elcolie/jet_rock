@@ -31,7 +31,7 @@ certificatesResolvers:
 http:
   routers:
     web-secure-router:
-      rule: "Host(`jetr0ck.com`) || Host(`www.jetr0ck.com`)"
+      rule: "Host(`jetrock.pro`) || Host(`www.jetrock.pro`)"
       entryPoints:
         - web-secure
       middlewares:
@@ -42,7 +42,7 @@ http:
         certResolver: letsencrypt
 
     flower-secure-router:
-      rule: "Host(`jetr0ck.com`)"
+      rule: "Host(`jetrock.pro`)"
       entryPoints:
         - flower
       service: flower
