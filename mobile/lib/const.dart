@@ -1,9 +1,12 @@
+import 'package:flutter/material.dart';
+
 enum Member {
   sarit,
   suwat,
   palm,
   lenovo,
 }
+
 Map<Member, String> MemberDict = {
   Member.sarit: "sarit",
   Member.suwat: "suwat",

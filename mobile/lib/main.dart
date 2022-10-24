@@ -43,39 +43,41 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final Member deviceName = Member.sarit;
+  final Member deviceName = Member.palm;
   final TextEditingController _controller = TextEditingController();
   final _channel = WebSocketChannel.connect(
-    // Uri.parse('wss://echo.websocket.events')
-    // Uri.parse('ws://192.168.1.46:8000/ws/chat/zeroth/') // local server.
-    Uri.parse('wss://www.jetrock.pro/ws/chat/zeroth/') // JetRock server.
+    Uri.parse('ws://192.168.1.46:8000/ws/chat/zeroth/') // local server.
+    // Uri.parse('wss://www.jetrock.pro/ws/chat/zeroth/') // JetRock server.
   );
   LocationData? locationData;
   Timer? timer;
-  Marker saritMarker = Marker(
-    point: LatLng(30, 40),
-    width: 80,
-    height: 80,
-    builder: (context) => FlutterLogo(),
-  );
-  Marker palmMarker = Marker(
-    point: LatLng(30, 40),
-    width: 80,
-    height: 80,
-    builder: (context) => FlutterLogo(),
-  );
-  Marker lenovoMarker = Marker(
-    point: LatLng(30, 40),
-    width: 80,
-    height: 80,
-    builder: (context) => FlutterLogo(),
-  );
-  Marker suwatMarker = Marker(
-    point: LatLng(30, 40),
-    width: 80,
-    height: 80,
-    builder: (context) => FlutterLogo(),
-  );
+  Map<Member, Marker> dictMarkers = {
+    Member.sarit: Marker(
+      point: LatLng(30, 40),
+      width: 80,
+      height: 80,
+      builder: (context) => FlutterLogo(),
+    ),
+    Member.palm : Marker(
+      point: LatLng(30, 40),
+      width: 80,
+      height: 80,
+      builder: (context) => FlutterLogo(),
+    ),
+    Member.lenovo: Marker(
+      point: LatLng(30, 40),
+      width: 80,
+      height: 80,
+      builder: (context) => FlutterLogo(),
+    ),
+    Member.suwat : Marker(
+      point: LatLng(30, 40),
+      width: 80,
+      height: 80,
+      builder: (context) => FlutterLogo(),
+    )
+  };
+
 
   @override
   void initState() {
@@ -133,16 +135,20 @@ class _MyHomePageState extends State<MyHomePage> {
           Map payload = json.decode(_['message']);
           print(payload);
           if (payload['name'] == MemberDict[Member.sarit]) {
-            saritMarker = returnMarker(payload, Icon(Icons.access_alarm, color: Colors.blue,));
+            dictMarkers[Member.sarit] = returnMarker(
+                payload, Icon(Icons.access_alarm, color: Colors.blue,));;
           }
           if (payload['name'] == MemberDict[Member.suwat]) {
-            suwatMarker = returnMarker(payload, Icon(Icons.water_drop, color: Colors.blueAccent,));
+            dictMarkers[Member.suwat] = returnMarker(
+                payload, Icon(Icons.water_drop, color: Colors.blueAccent,));
           }
           if (payload['name'] == MemberDict[Member.lenovo]) {
-            lenovoMarker = returnMarker(payload, Icon(Icons.adb, color: Colors.blue,));
+            dictMarkers[Member.lenovo] = returnMarker(
+                payload, Icon(Icons.adb, color: Colors.blue,));
           }
           if (payload['name'] == MemberDict[Member.palm]) {
-            palmMarker = returnMarker(payload, Icon(Icons.local_fire_department, color: Colors.blue,));
+            dictMarkers[Member.palm] = returnMarker(
+                payload, Icon(Icons.local_fire_department, color: Colors.blue,));
           }
           return Container();
         },
@@ -157,8 +163,29 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       );
     }
-    // print("${locationData!.latitude!}, ${locationData!.longitude!}");
-    print("${saritMarker.point.latitude}, ${saritMarker.point.longitude}");
+    List<Marker> markers = [];
+    dictMarkers.forEach((key, value) {
+      print(key);
+      print(value);
+      if(key == deviceName){
+        markers.add(Marker(
+          point: LatLng(locationData!.latitude!,
+              locationData!.longitude!),
+          width: 80,
+          height: 80,
+          builder: (context) => Icon(
+            Icons.add,
+            color: Colors.red,
+            size: 50,
+          ),
+        ));
+      }else{
+        markers.add(value);
+      }
+    });
+
+
+    print("${locationData!.latitude!}, ${locationData!.longitude!}");
     return Scaffold(
       body: Center(
         child: Column(
@@ -198,23 +225,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     userAgentPackageName: 'com.example.app',
                   ),
                   MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: LatLng(locationData!.latitude!,
-                            locationData!.longitude!),
-                        width: 80,
-                        height: 80,
-                        builder: (context) => Icon(
-                          Icons.add,
-                          color: Colors.red,
-                          size: 50,
-                        ),
-                      ),
-                      saritMarker,
-                      lenovoMarker,
-                      palmMarker,
-                      suwatMarker,
-                    ],
+                    markers: markers,
                   )
                 ],
               ),
