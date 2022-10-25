@@ -191,14 +191,6 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Form(
-            //   child: TextFormField(
-            //     controller: _controller,
-            //     decoration:
-            //         const InputDecoration(labelText: 'Send a message'),
-            //   ),
-            // ),
-            // const SizedBox(height: 24),
             _streamBuilder,
             Container(
               height: queryData.size.height,
@@ -209,20 +201,15 @@ class _MyHomePageState extends State<MyHomePage> {
                     locationData!.latitude!,
                     locationData!.longitude!,
                   ),
-                  // center: LatLng(51.509364, -0.128928),
                   zoom: 15,
                 ),
-                nonRotatedChildren: [
-                  AttributionWidget.defaultWidget(
-                    source: 'OpenStreetMap contributors',
-                    onSourceTapped: null,
-                  ),
-                ],
                 children: [
                   TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    // urlTemplate:
+                    //     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate: 'http://mt{s}.google.com/vt/lyrs=m@221097413,parking,traffic,lyrs=m&x={x}&y={y}&z={z}',
                     userAgentPackageName: 'com.example.app',
+                    retinaMode: true,
                   ),
                   MarkerLayer(
                     markers: markers,
@@ -233,11 +220,6 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: _sendMessage,
-      //   tooltip: 'Send message',
-      //   child: const Icon(Icons.send),
-      // ),
     );
   }
 
