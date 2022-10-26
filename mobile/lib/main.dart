@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart'; // Suitable for most situations
 import 'package:flutter_map/plugin_api.dart'; // Only import if required functionality is not exposed by default
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -43,41 +44,43 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
-  final Member deviceName = Member.sarit;
+  final Member deviceName = Member.lenovo;
   final TextEditingController _controller = TextEditingController();
   final websocketUrl = Uri.parse('ws://192.168.1.46:8000/ws/chat/zeroth/'); // local server.
   // final websocketUrl =  Uri.parse('wss://www.jetrock.pro/ws/chat/zeroth/'); // JetRock server.
   late var myChannel = WebSocketChannel.connect(
     websocketUrl
-  );
+  );  // Without late prefix will be unable to use single websocketUrl
   LocationData? locationData;
   Timer? timer;
-  Map<Member, Marker> dictMarkers = {
-    Member.sarit: Marker(
-      point: LatLng(30, 40),
-      width: 80,
-      height: 80,
-      builder: (context) => FlutterLogo(),
-    ),
-    Member.palm : Marker(
-      point: LatLng(30, 40),
-      width: 80,
-      height: 80,
-      builder: (context) => FlutterLogo(),
-    ),
-    Member.lenovo: Marker(
-      point: LatLng(30, 40),
-      width: 80,
-      height: 80,
-      builder: (context) => FlutterLogo(),
-    ),
-    Member.suwat : Marker(
-      point: LatLng(30, 40),
-      width: 80,
-      height: 80,
-      builder: (context) => FlutterLogo(),
-    )
-  };
+  MapController mapController = MapController();
+  LatLng centerScreen = LatLng(0, 0);
+  // Map<Member, Marker> dictMarkers = {
+  //   Member.sarit: Marker(
+  //     point: LatLng(30, 40),
+  //     width: 80,
+  //     height: 80,
+  //     builder: (context) => FlutterLogo(),
+  //   ),
+  //   Member.palm : Marker(
+  //     point: LatLng(30, 40),
+  //     width: 80,
+  //     height: 80,
+  //     builder: (context) => FlutterLogo(),
+  //   ),
+  //   Member.lenovo: Marker(
+  //     point: LatLng(30, 40),
+  //     width: 80,
+  //     height: 80,
+  //     builder: (context) => FlutterLogo(),
+  //   ),
+  //   Member.suwat : Marker(
+  //     point: LatLng(30, 40),
+  //     width: 80,
+  //     height: 80,
+  //     builder: (context) => FlutterLogo(),
+  //   )
+  // };
 
 
   @override
@@ -104,7 +107,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
           'latitude': locationData!.latitude!,
           'longitude': locationData!.longitude!,
           'accuracy': locationData!.accuracy!,
-          'name': MemberDict[deviceName],
+          'name': memberDict[deviceName]!.name,
         };
         myChannel.sink.add(json.encode(dataDict));
       }
@@ -131,6 +134,17 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
       builder: (context) => icon
     );
   }
+  SpeedDialChild getSpeedDialChild(MemberProfile profile){
+    return SpeedDialChild(
+      child: profile.icon,
+      label: profile.name,
+      backgroundColor: Colors.amberAccent,
+      onTap: () {
+        double zoom = 15.0;
+        mapController.move(profile.lastKnownPosition, zoom);
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,25 +158,31 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
           if (otherLocations == '') {
             return Container();
           }
-          print(otherLocations);
           Map _ = json.decode(otherLocations);
           Map payload = json.decode(_['message']);
-          print(payload);
-          if (payload['name'] == MemberDict[Member.sarit]) {
-            dictMarkers[Member.sarit] = returnMarker(
-                payload, Icon(Icons.access_alarm, color: Colors.blue,));;
+          if (payload['name'] == memberDict[Member.sarit]!.name) {
+            memberDict[Member.sarit]!.marker = returnMarker(
+                payload, memberDict[Member.sarit]!.icon);
+            memberDict[Member.sarit]!.lastKnownPosition = LatLng(payload['latitude'],
+                payload['longitude']);
           }
-          if (payload['name'] == MemberDict[Member.suwat]) {
-            dictMarkers[Member.suwat] = returnMarker(
-                payload, Icon(Icons.water_drop, color: Colors.blueAccent,));
+          if (payload['name'] == memberDict[Member.suwat]!.name) {
+            memberDict[Member.suwat]!.marker = returnMarker(
+                payload, memberDict[Member.suwat]!.icon);
+            memberDict[Member.suwat]!.lastKnownPosition = LatLng(payload['latitude'],
+                payload['longitude']);
           }
-          if (payload['name'] == MemberDict[Member.lenovo]) {
-            dictMarkers[Member.lenovo] = returnMarker(
-                payload, Icon(Icons.adb, color: Colors.blue,));
+          if (payload['name'] == memberDict[Member.lenovo]!.name) {
+            memberDict[Member.lenovo]!.marker = returnMarker(
+                payload, memberDict[Member.lenovo]!.icon);
+            memberDict[Member.lenovo]!.lastKnownPosition = LatLng(payload['latitude'],
+                payload['longitude']);
           }
-          if (payload['name'] == MemberDict[Member.palm]) {
-            dictMarkers[Member.palm] = returnMarker(
-                payload, Icon(Icons.local_fire_department, color: Colors.blue,));
+          if (payload['name'] == memberDict[Member.palm]!.name) {
+            memberDict[Member.palm]!.marker = returnMarker(
+                payload, memberDict[Member.palm]!.icon);
+            memberDict[Member.palm]!.lastKnownPosition = LatLng(payload['latitude'],
+                payload['longitude']);
           }
           return Container();
         },
@@ -178,9 +198,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
       );
     }
     List<Marker> markers = [];
-    dictMarkers.forEach((key, value) {
-      print(key);
-      print(value);
+    memberDict.forEach((key, value) {
       if(key == deviceName){
         markers.add(Marker(
           point: LatLng(locationData!.latitude!,
@@ -194,12 +212,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
           ),
         ));
       }else{
-        markers.add(value);
+        markers.add(returnMarker({
+          "latitude": value.lastKnownPosition.latitude,
+          "longitude": value.lastKnownPosition.longitude,
+        }, value.icon));
       }
     });
-
-
-    print("${locationData!.latitude!}, ${locationData!.longitude!}");
+    // print("${locationData!.latitude!}, ${locationData!.longitude!}");
     return Scaffold(
       body: Center(
         child: Column(
@@ -210,6 +229,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
               height: queryData.size.height,
               width: queryData.size.width,
               child: FlutterMap(
+                mapController: mapController,
                 options: MapOptions(
                   center: LatLng(
                     locationData!.latitude!,
@@ -234,6 +254,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
           ],
         ),
       ),
+      floatingActionButton: SpeedDial(
+        icon: Icons.remove_red_eye_rounded,
+        backgroundColor: Colors.amber,
+        children: [
+          getSpeedDialChild(memberDict[Member.sarit]!),
+          getSpeedDialChild(memberDict[Member.suwat]!),
+          getSpeedDialChild(memberDict[Member.lenovo]!),
+          getSpeedDialChild(memberDict[Member.palm]!),
+        ],
+      ),
     );
   }
 
@@ -249,7 +279,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
     myChannel.sink.close();
     _controller.dispose();
     Wakelock.disable();
-    WidgetsBinding.instance?.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 }
