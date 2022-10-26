@@ -42,12 +42,13 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  final Member deviceName = Member.palm;
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
+  final Member deviceName = Member.sarit;
   final TextEditingController _controller = TextEditingController();
-  final _channel = WebSocketChannel.connect(
-    Uri.parse('ws://192.168.1.46:8000/ws/chat/zeroth/') // local server.
-    // Uri.parse('wss://www.jetrock.pro/ws/chat/zeroth/') // JetRock server.
+  final websocketUrl = Uri.parse('ws://192.168.1.46:8000/ws/chat/zeroth/'); // local server.
+  // final websocketUrl =  Uri.parse('wss://www.jetrock.pro/ws/chat/zeroth/'); // JetRock server.
+  late var myChannel = WebSocketChannel.connect(
+    websocketUrl
   );
   LocationData? locationData;
   Timer? timer;
@@ -80,7 +81,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      //Resume the application.
+      myChannel.sink.close();
+      myChannel = WebSocketChannel.connect(
+          websocketUrl
+      );
+    }
+  }
+
+
+  @override
   void initState() {
+    WidgetsBinding.instance.addObserver(this);
     super.initState();
     Timer.periodic(Duration(seconds: 10), (timer) {
       queryMyLocation();
@@ -92,7 +106,7 @@ class _MyHomePageState extends State<MyHomePage> {
           'accuracy': locationData!.accuracy!,
           'name': MemberDict[deviceName],
         };
-        _channel.sink.add(json.encode(dataDict));
+        myChannel.sink.add(json.encode(dataDict));
       }
     });
     Wakelock.enable();
@@ -124,7 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
     queryData = MediaQuery.of(context);
     // Get the others coordinate
     var _streamBuilder = StreamBuilder(
-        stream: _channel.stream,
+        stream: myChannel.stream,
         builder: (context, snapshot) {
           String otherLocations = snapshot.hasData ? '${snapshot.data}' : '';
           if (otherLocations == '') {
@@ -209,7 +223,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     //     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     urlTemplate: 'http://mt{s}.google.com/vt/lyrs=m@221097413,parking,traffic,lyrs=m&x={x}&y={y}&z={z}',
                     userAgentPackageName: 'com.example.app',
-                    retinaMode: true,
+                    retinaMode: false,
                   ),
                   MarkerLayer(
                     markers: markers,
@@ -223,17 +237,19 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  // Websocket example function call
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
-      _channel.sink.add(_controller.text);
+      myChannel.sink.add(_controller.text);
     }
   }
 
   @override
   void dispose() {
-    _channel.sink.close();
+    myChannel.sink.close();
     _controller.dispose();
     Wakelock.disable();
+    WidgetsBinding.instance?.removeObserver(this);
     super.dispose();
   }
 }
