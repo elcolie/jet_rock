@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart'; // Suitable for most situations
@@ -45,7 +43,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
   final Member deviceName = Member.lenovo;
-  final TextEditingController _controller = TextEditingController();
   final websocketUrl = Uri.parse('ws://192.168.1.46:8000/ws/chat/zeroth/'); // local server.
   // final websocketUrl =  Uri.parse('wss://www.jetrock.pro/ws/chat/zeroth/'); // JetRock server.
   late var myChannel = WebSocketChannel.connect(
@@ -55,32 +52,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
   Timer? timer;
   MapController mapController = MapController();
   LatLng centerScreen = LatLng(0, 0);
-  // Map<Member, Marker> dictMarkers = {
-  //   Member.sarit: Marker(
-  //     point: LatLng(30, 40),
-  //     width: 80,
-  //     height: 80,
-  //     builder: (context) => FlutterLogo(),
-  //   ),
-  //   Member.palm : Marker(
-  //     point: LatLng(30, 40),
-  //     width: 80,
-  //     height: 80,
-  //     builder: (context) => FlutterLogo(),
-  //   ),
-  //   Member.lenovo: Marker(
-  //     point: LatLng(30, 40),
-  //     width: 80,
-  //     height: 80,
-  //     builder: (context) => FlutterLogo(),
-  //   ),
-  //   Member.suwat : Marker(
-  //     point: LatLng(30, 40),
-  //     width: 80,
-  //     height: 80,
-  //     builder: (context) => FlutterLogo(),
-  //   )
-  // };
 
 
   @override
@@ -267,17 +238,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
     );
   }
 
-  // Websocket example function call
-  void _sendMessage() {
-    if (_controller.text.isNotEmpty) {
-      myChannel.sink.add(_controller.text);
-    }
-  }
-
   @override
   void dispose() {
     myChannel.sink.close();
-    _controller.dispose();
     Wakelock.disable();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
